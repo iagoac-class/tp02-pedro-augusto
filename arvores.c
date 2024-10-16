@@ -9,49 +9,129 @@ struct arvbin *Novo_no(int valor){
     // Alocamos o espaço de uma posição da struct para armazenar o nó, definimos o valor do nó com o parâmetro passado e iniciamos suas subárvores com NULL.
     struct arvbin *tmp = (struct arvbin*)malloc(sizeof(struct arvbin));
     tmp->valor = valor;
-    tmp->esq = tmp->dir = 0;
+    tmp->esq = tmp->dir = NULL;
 
     return tmp;
 }
 
 // Função para buscar um nó na árvore binária.
-struct arvbin *Busca_arvbin(int valor){
-    struct arvbin *tmp = root;
-    // Caso root == NULL, a árvore está vazia.
-    if(root == NULL){
-        return root;
-    }
+struct arvbin *Busca_arvbin(int valor, struct arvbin **pai){
+    struct arvbin *tmp = root; // Ponteiro para percorrer a àrvore.
+    *pai = NULL; // Ponteiro para indicar o pai do nó encontrado (se ele possuir).
 
-    // Enquanto o valor desejado não for encontrado e o nó não for NULO, continua percorrendo a árvore.
-    while(tmp->valor != valor && tmp->valor != NULL){
-        if(valor == tmp->valor){
-            return tmp;
+    // Ponteiro para armazenar o nó encontrado.
+    struct arvbin *no_encontrado = NULL;
+    
+    // Busca pelo nó desejado e por seu nó pai.
+    while(tmp != NULL){
+        *pai = tmp;
+        if(tmp->valor > valor){
+            tmp = tmp->esq;
+        }else if(tmp->valor < valor){
+            tmp = tmp->dir;
         }else{
-            if(valor > tmp->valor){
-                tmp = tmp->dir;
-            }else if(valor < tmp->valor){
-                tmp = tmp->esq;
-            }
+            no_encontrado = tmp;
+            tmp = NULL;
         }
     }
 
-    // Caso o valor não seja encontrado na árvore, a função retorna NULL.
-    return tmp;
+    // Retorna o valor encontrado pela busca, sendo ele o valor encontrado ou NULL.
+    return no_encontrado;
 }
 
 // Função para inserir um nó na árvore binária.
 struct arvbin *Inserir_bin(int valor){
-    // Nó a ser inserido na árvore binária.
-    struct arvbin *no_inserir = Novo_no(valor);
-
-    // Posição em que o nó deve ser inserido.
-    struct arvbin *pos_inserir = Busca_arvbin(valor);
+    struct arvbin *no_inserir = Novo_no(valor); // Nó a ser inserido na árvore binária.
     
-    if(pos_inserir == NULL){
-        pos_inserir = no_inserir;
+    // Se a raiz for NULL, nó é inserido como raiz diretamente.
+    if( root == NULL){
+        root = no_inserir;
+        return root;
+    }
+
+    // Criamos ponteiros para percorrer pela àrvore e encontrar o nó pai correto.
+    struct arvbin *tmp = root;
+    struct arvbin *pai = NULL;
+    tmp = Busca_arvbin(valor, &pai);
+
+    // Caso seja encontrado um nó válido ao invés da posição de inserção desejada, interrompemos a inserção.
+    if(tmp != NULL){
+        free(no_inserir); // Liberando o espaço alocado.
+        printf("\nNão foi possível realizar a inserção, valor já presente na árvore!");
+        return NULL;
+    }
+
+    // Inserindo o nó na posição correta.
+    if(pai != NULL){
+        if(valor < pai->valor){
+            pai->esq = no_inserir;
+        }else{
+            pai->dir = no_inserir;
+        }
     }
 
     return no_inserir;
+}
+
+// Função para remover um nó da árvore binária.
+struct arvbin *Remover_bin(int valor){
+    
+    // Criamos ponteiros para percorrer pela àrvore e encontrar o nó pai correto.
+    struct arvbin *pai = NULL;
+    struct arvbin *tmp = Busca_arvbin(valor, &pai);
+
+    if(tmp == NULL) return NULL; // Caso o nó a ser removido não exista.
+
+    // Caso o nó a ser removido não possua filhos.
+    if(tmp->esq == NULL && tmp->dir == NULL){
+        if(pai == NULL){ // Nó a ser removido é a raiz.
+           free(tmp);
+           root = NULL; // Árvore ficará vazia.
+        }else if(pai->esq == tmp){
+            pai->esq = NULL; // Filho esquerdo removido.
+        }else{
+            pai->dir = NULL; // Filho direito removido.
+        }
+    }
+
+    // Caso o no a ser removido possua apenas um filho.
+    else if(tmp->esq == NULL || tmp->dir == NULL){
+        struct arvbin *filho = (tmp->esq != NULL) ? tmp->esq : tmp->dir; // Caso tmp->esq != NULL, filho == tmp->esq; caso tmp->esq == NULL, filho == tmp->dir.
+        if(pai == NULL){ // Nó a ser removido é a raiz.
+            free(tmp);
+            root = filho; // Filho assume papel de raiz.
+        }else if(pai->esq == tmp){
+            pai->esq = filho; // Conecta o pai ao filho restante.
+        }else{
+            pai->dir = filho; // Conecta o pai ao filho restante.
+        }
+        free(tmp); // Libera o espaço do nó que foi removido.
+    }
+
+    // Caso o nó a ser removido possua dois filhos.
+    else{
+        // Encontrar o sucessor (menor valor na subárvore direita).       
+        struct arvbin *sucessor = tmp->dir;
+
+        // Encontrar o sucessor do nó a ser removido.
+        while(sucessor->esq != NULL){
+            sucessor = sucessor->esq;
+        }
+
+        // Substituindo o nó a ser removido pelo seu sucessor.
+        tmp->valor = sucessor->valor;
+
+        // Removendo o sucessor.
+        struct arvbin *pai_sucessor = tmp; // Nó que estamos removendo.
+        if(pai_sucessor->esq == sucessor){
+            pai_sucessor->esq = sucessor->dir; // Conecta o filho no sucessor.
+        }else{
+            pai_sucessor->dir = sucessor->dir; // Conecta o filho do sucessor.
+        }
+        free(sucessor); // Libera a memória do sucessor.
+    }
+
+    return tmp; // Retorna o nó removido (ou NULL caso não exista).
 }
 
 double arvore_binaria(int instancia_num) {
