@@ -4,10 +4,18 @@
 #include <time.h>       
 #include "arvores.h"
 
+// Inicializando a raiz da árvore como NULL, (Árvore começa vazia).
+struct arvbin *root = NULL;
+
 // Função para criar um novo nó na árvore binária.
 struct arvbin *Novo_no(int valor){
     // Alocamos o espaço de uma posição da struct para armazenar o nó, definimos o valor do nó com o parâmetro passado e iniciamos suas subárvores com NULL.
     struct arvbin *tmp = (struct arvbin*)malloc(sizeof(struct arvbin));
+    if(!tmp){
+        printf("\nErro ao alocar memória para o nó!");
+        exit (EXIT_FAILURE);
+    }
+    
     tmp->valor = valor;
     tmp->esq = tmp->dir = NULL;
 
@@ -50,9 +58,8 @@ struct arvbin *Inserir_bin(int valor){
     }
 
     // Criamos ponteiros para percorrer pela àrvore e encontrar o nó pai correto.
-    struct arvbin *tmp = root;
     struct arvbin *pai = NULL;
-    tmp = Busca_arvbin(valor, &pai);
+    struct arvbin *tmp = Busca_arvbin(valor, &pai);
 
     // Caso seja encontrado um nó válido ao invés da posição de inserção desejada, interrompemos a inserção.
     if(tmp != NULL){
@@ -79,6 +86,8 @@ struct arvbin *Remover_bin(int valor){
     // Criamos ponteiros para percorrer pela àrvore e encontrar o nó pai correto.
     struct arvbin *pai = NULL;
     struct arvbin *tmp = Busca_arvbin(valor, &pai);
+
+    if(root == NULL) return NULL; // Caso a árvores esteja vazia.
 
     if(tmp == NULL) return NULL; // Caso o nó a ser removido não exista.
 
@@ -134,10 +143,36 @@ struct arvbin *Remover_bin(int valor){
     return tmp; // Retorna o nó removido (ou NULL caso não exista).
 }
 
+// Função contendo todas as operações que devem ser realizadas na árvore binária.
 double arvore_binaria(int instancia_num) {
     double tempo = 0;
     clock_t begin = clock();
 
+    // Operando o Arquivo de Instâncias.
+    char filename[20]; // Variável para armazenar o nome do arquivo.
+    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num); // Formatando a string conforme a instância passada e armazenando em filename.
+    
+    // Lendo o arquivo de instâncias.
+    FILE *arq = fopen(filename, "r");
+    if(!arq){
+        printf("\nErro ao abrir o arquivo!");
+        return -1;
+    }
+
+    // Variáveis para armazenar as operações que serão realizadas.
+    char op;
+    int valor;
+
+    // Lendo o arquivo linha por linha e realizando as operações.
+    while (fscanf(arq, " %c %d", &op, &valor) == 2) {
+        if (op == 'I') {
+            Inserir_bin(valor); // Realiza a inserção.
+        } else if (op == 'R') {
+            Remover_bin(valor); // Realiza a remoção.
+        }
+    }
+
+    fclose(arq); // Fechando o arquivo após a leitura  
     
     clock_t end = clock();
     // calcula o tempo decorrido encontrando a diferença (end - begin) e
@@ -150,37 +185,35 @@ double arvore_balanceada(int instancia_num) {
     double tempo = 0;
     clock_t begin = clock();
 
+    // Operando o Arquivo de Instâncias.
+    char filename[20]; // Variável para armazenar o nome do arquivo.
+    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num); // Formatando a string conforme a instância passada e armazenando em filename.
+    
+    // Lendo o arquivo de instâncias.
+    FILE *arq = fopen(filename, "r");
+    if(!arq){
+        printf("\nErro ao abrir o arquivo!");
+        return -1;
+    }
+
+    // Variáveis para armazenar as operações que serão realizadas.
+    char op;
+    int valor;
+
+    // Lendo o arquivo linha por linha e realizando as operações.
+    while (fscanf(arq, " %c %d", &op, &valor) == 2) {
+        if (op == 'I') {
+            Inserir_bin(valor); // Realiza a inserção.
+        } else if (op == 'R') {
+            Remover_bin(valor); // Realiza a remoção.
+        }
+    }
+
+    fclose(arq); // Fechando o arquivo após a leitura  
     
     clock_t end = clock();
     // calcula o tempo decorrido encontrando a diferença (end - begin) e
     // dividindo a diferença por CLOCKS_PER_SEC para converter em segundos
     tempo += (double)(end - begin) / CLOCKS_PER_SEC;
     return (tempo);
-}
-
-
-int main(int argc, char* argv[]) {
-    ///////////////////////////////////////////////////////////
-    /////////////////// Leitor de instâncias //////////////////
-    ///////////////// Não deve ser modificado /////////////////
-    ///////////////////////////////////////////////////////////
-    int instancia_num = -1;
-    instancia_num = atoi(argv[1]);
-    if (instancia_num <= 0 || instancia_num > 10) {
-        printf("Para executar o código, digite ./arvores x\nonde x é um número entre 1 e 10 que simboliza a instância utilizada\n");
-        exit(0);
-    }
-    
-    // Iniciando a raiz da árvore como NULL. (Árvore começa vazia).
-    root = NULL;
-
-    double tempo_n_balanceada = arvore_binaria(instancia_num);
-    double tempo_balanceada = arvore_balanceada(instancia_num);
-
-    
-
-    
-    printf("%f\n%f\n", tempo_n_balanceada, tempo_balanceada);
-
-    return (1);
 }
