@@ -4,6 +4,15 @@
 #include <time.h>       
 #include "arvores.h"
 
+/*TODO:
+- Fazer implementação da Árvore AVL em arvores.c e arvores.h
+- Fazer uma função para desalocar a memória após uso do programa
+
+*ISSUES:
+- Erro de segmentação quando executamos a instância 1. (Provavelmente acontece pela falta de uma função que desaloque memória após o uso).
+
+*/
+
 
 /*
 double arvore_balanceada(int instancia_num) {
