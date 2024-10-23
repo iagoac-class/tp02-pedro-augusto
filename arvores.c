@@ -144,75 +144,282 @@ struct arvbin *Remover_bin(int valor){
 
 // Função contendo todas as operações que devem ser realizadas na árvore binária.
 double arvore_binaria(int instancia_num) {
-    double tempo = 0;
     clock_t begin = clock();
 
-    // Operando o Arquivo de Instâncias.
-    char filename[20]; // Variável para armazenar o nome do arquivo.
-    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num); // Formatando a string conforme a instância passada e armazenando em filename.
-    
+    // Formatação do nome do arquivo.
+    char filename[20];
+    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num);
+
     // Lendo o arquivo de instâncias.
     FILE *arq = fopen(filename, "r");
-    if(!arq){
+    if (!arq) {
         printf("\nErro ao abrir o arquivo!");
-        return -1;
+        return -1.0;
     }
 
-    // Variáveis para armazenar as operações que serão realizadas.
+    // Variáveis para operações.
     char op;
     int valor;
 
-    // Lendo o arquivo linha por linha e realizando as operações.
+    // Lendo o arquivo e realizando operações.
     while (fscanf(arq, " %c %d", &op, &valor) == 2) {
         if (op == 'I') {
-            Inserir_bin(valor); // Realiza a inserção.
+            Inserir_bin(valor); // Inserção.
         } else if (op == 'R') {
-            Remover_bin(valor); // Realiza a remoção.
+            Remover_bin(valor); // Remoção.
         }
     }
 
-    fclose(arq); // Fechando o arquivo após a leitura  
-    
+    fclose(arq); // Fechando o arquivo.
+
     clock_t end = clock();
-    // calcula o tempo decorrido encontrando a diferença (end - begin) e
-    // dividindo a diferença por CLOCKS_PER_SEC para converter em segundos
-    tempo += (double)(end - begin) / CLOCKS_PER_SEC;
-    return (tempo);
+    double tempo = (double)(end - begin) / CLOCKS_PER_SEC; // Calcula o tempo decorrido.
+    return tempo; // Retorna o tempo.
 }
 
-double arvore_balanceada(int instancia_num) {
-    double tempo = 0;
-    clock_t begin = clock();
+// Inicializando a árvore balanceada como NULL, (começa vazia).
+struct Node *root_avl = NULL;
 
-    // Operando o Arquivo de Instâncias.
-    char filename[20]; // Variável para armazenar o nome do arquivo.
-    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num); // Formatando a string conforme a instância passada e armazenando em filename.
-    
-    // Lendo o arquivo de instâncias.
-    FILE *arq = fopen(filename, "r");
-    if(!arq){
-        printf("\nErro ao abrir o arquivo!");
-        return -1;
+// Função que retorna o máximo entre dois valores inteiros.
+int max(int a, int b)
+{
+    return (a > b)? a : b;
+}
+
+// A utility function to get the height of the tree
+int height(struct Node *N)
+{
+    if (N == NULL)
+        return 0;
+    return N->height;
+}
+
+
+// Função para alocar um novo na árvore balanceada.
+struct Node* newNode(int key)
+{
+    struct Node* node = (struct Node*)malloc(sizeof(struct Node));
+    node->key = key;
+    node->left = node->right = NULL;
+    node->height = 1;  // O novo nó é concebido primeiramente como folha.
+    return(node);
+}
+
+// Função que realiza a rotação de um nó para a direita.
+struct Node *rightRotate(struct Node *y)
+{
+    struct Node *x = y->left;
+    struct Node *T2 = x->right;
+
+    // Realizando a rotação.
+    x->right = y;
+    y->left = T2;
+
+    // Atualizando as alturas.
+    y->height = max(height(y->left),height(y->right)) + 1;
+    x->height = max(height(x->left),height(x->right)) + 1;
+
+    // Retornando a nova raiz.
+    return x;
+}
+
+// Função que realiza a rotação de um nó para a esquerda.
+struct Node *leftRotate(struct Node *x)
+{
+    struct Node *y = x->right;
+    struct Node *T2 = y->left;
+
+    // Realizando a rotação.
+    y->left = x;
+    x->right = T2;
+
+    // Atualizando as alturas.
+    x->height = max(height(x->left),height(x->right)) + 1;
+    y->height = max(height(y->left),height(y->right)) + 1;
+
+    // Retornando a nova raiz.
+    return y;
+}
+
+// Função que obtém o fator de balanceamento de um nó.
+int getBalance(struct Node *N)
+{
+    if (N == NULL)
+        return 0; // Se o nó não existe, retorna 0.
+
+    return height(N->left) - height(N->right); // Caso exista, retorna o fator de balanceamento, (altura à esquerda - altura à direita).
+}
+
+// Função que realiza a inserção de um novo nó na árvore, recursivamente.
+struct Node* insert(struct Node* node, int key)
+{
+    // Primeiramente, realizamos a inserção do mesmo modo que a árvore binária de busca (só que agora, recursivamente).
+    if (node == NULL)
+        return(newNode(key));
+
+    if (key < node->key)
+        node->left  = insert(node->left, key);
+    else if (key > node->key)
+        node->right = insert(node->right, key);
+    else
+        return node;
+
+    // Agora, atualizamos a altura do nó.
+    node->height = 1 + max(height(node->left), height(node->right));
+
+    // Checamos o fator de balanceamento do nó.
+    int balance = getBalance(node);
+
+    // Caso o nó esteja desbalanceado, existem 4 casos possíveis:
+
+    // Caso Esquerda Esquerda.
+    if (balance > 1 && key < node->left->key)
+        return rightRotate(node);
+
+    // Caso Direita Direita.
+    if (balance < -1 && key > node->right->key)
+        return leftRotate(node);
+
+    // Caso Esquerda Direita.
+    if (balance > 1 && key > node->left->key)
+    {
+        node->left =  leftRotate(node->left);
+        return rightRotate(node);
     }
 
-    // Variáveis para armazenar as operações que serão realizadas.
-    char op;
-    int valor;
+    // Caso Direita Esquerda.
+    if (balance < -1 && key < node->right->key)
+    {
+        node->right = rightRotate(node->right);
+        return leftRotate(node);
+    }
 
-    // Lendo o arquivo linha por linha e realizando as operações.
-    while (fscanf(arq, " %c %d", &op, &valor) == 2) {
-        if (op == 'I') {
-            Inserir_bin(valor); // Realiza a inserção.
-        } else if (op == 'R') {
-            Remover_bin(valor); // Realiza a remoção.
+    return node;
+}
+
+// Retorna o nó da árvore com o menor valor.
+struct Node * minValueNode(struct Node* node)
+{
+    struct Node* current = node;
+
+    // Percorre a árvore de cima pra baixo a fim de encontrar o nó mais a esquerda possível.
+    while (current->left != NULL)
+        current = current->left;
+
+    return current;
+}
+
+// Função recursiva para realizar a remoção de um nó da árvore.
+struct Node* deleteNode(struct Node* root_avl, int key)
+{
+    // Primeiramente, realizamos a remoção tradicional da árvore desbalanceada (de modo recursivo).
+    if (root_avl == NULL) return root_avl;
+    
+    // Se o nó procurado está à esquerda.
+    if (key < root_avl->key) root_avl->left = deleteNode(root_avl->left, key);
+
+    // Se o nó procurado está à direita.
+    else if( key > root_avl->key) root_avl->right = deleteNode(root_avl->right, key);
+
+    
+    else
+    {
+        // Nó com somente um filho ou sem filhos. 
+        if( (root_avl->left == NULL) || (root_avl->right == NULL)){
+
+            struct Node *temp = root_avl->left ? root_avl->left : root_avl->right;
+
+            // Nó sem filhos.
+            if (temp == NULL)
+            {
+                temp = root_avl;
+                root_avl = NULL;
+            }else{ // Nó com somente um filho.
+                *root_avl = *temp; 
+                free(temp);
+            }
+        }
+        else
+        {
+            // Nó com 2 filhos, procuramos pelo sucessor, menor valor da subárvore direita.
+            struct Node* temp = minValueNode(root_avl->right);
+
+            // Passa o valor do sucessor para esse nó.
+            root_avl->key = temp->key;
+
+            // Remova o sucessor.
+            root_avl->right = deleteNode(root_avl->right, temp->key);
         }
     }
 
-    fclose(arq); // Fechando o arquivo após a leitura  
-    
+    // Se a árvore não possui nós, vazia.
+    if (root_avl == NULL)
+      return root_avl;
+
+    // Agora, atualizamos a altura do nó atual.
+    root_avl->height = 1 + max(height(root_avl->left),height(root_avl->right));
+
+    // Obtendo o fator de balanceamento do nó.
+    int balance = getBalance(root_avl);
+
+    // Caso o nó esteja desbalanceado, temos 4 casos:
+
+    // Caso Esquerda Esquerda.
+    if (balance > 1 && getBalance(root_avl->left) >= 0)
+        return rightRotate(root_avl);
+
+    // Caso Esquerda Direita.
+    if (balance > 1 && getBalance(root_avl->left) < 0)
+    {
+        root_avl->left =  leftRotate(root_avl->left);
+        return rightRotate(root_avl);
+    }
+
+    // Caso Direita Direita.
+    if (balance < -1 && getBalance(root_avl->right) <= 0)
+        return leftRotate(root_avl);
+
+    // Caso Direita Esquerda.
+    if (balance < -1 && getBalance(root_avl->right) > 0)
+    {
+        root_avl->right = rightRotate(root_avl->right);
+        return leftRotate(root_avl);
+    }
+
+    return root_avl;
+}
+
+// Função contendo todas as operações que devem ser realizadas na árvore balanceada (AVL).
+double arvore_balanceada(int instancia_num) {
+    clock_t begin = clock();
+
+    // Formatação do nome do arquivo.
+    char filename[20];
+    snprintf(filename, sizeof(filename), "instancias/%d", instancia_num);
+
+    // Lendo o arquivo de instâncias.
+    FILE *arq = fopen(filename, "r");
+    if (!arq) {
+        printf("\nErro ao abrir o arquivo!");
+        return -1.0; 
+    }
+
+    // Variáveis para operações.
+    char op;
+    int valor;
+
+    // Lendo o arquivo e realizando operações.
+    while (fscanf(arq, " %c %d", &op, &valor) == 2) {
+        if (op == 'I') {
+            insert(root_avl, valor); // Inserção.
+        } else if (op == 'R') {
+            deleteNode(root_avl, valor); // Remoção.
+        }
+    }
+
+    fclose(arq); // Fechando o arquivo.
+
     clock_t end = clock();
-    // calcula o tempo decorrido encontrando a diferença (end - begin) e
-    // dividindo a diferença por CLOCKS_PER_SEC para converter em segundos
-    tempo += (double)(end - begin) / CLOCKS_PER_SEC;
-    return (tempo);
+    double tempo = (double)(end - begin) / CLOCKS_PER_SEC; // Calcula o tempo decorrido.
+    return tempo; // Retorna o tempo.
 }

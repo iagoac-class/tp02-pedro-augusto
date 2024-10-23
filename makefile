@@ -16,10 +16,7 @@ OBJ=$(C_SOURCE:.c=.o)
 CC=gcc
 
 # Flags (opções) para o compilador
-CC_FLAGS=-c         \
-         -Wall      \
-		 -g         \
-         -pedantic
+CC_FLAGS=-c -Wall -g -pedantic
 
 #########################
 # Compilação e linkagem #
@@ -29,11 +26,8 @@ all: $(PROJ_NAME)
 $(PROJ_NAME): $(OBJ)
 	$(CC) -o $@ $^
 
-%.o: %.c %.h
-	$(CC) -o $@ $< $(CC_FLAGS)
-
-main.o: main.c $(H_SOURCE)
-	$(CC) -o $@ $< $(CC_FLAGS)
+%.o: %.c
+	$(CC) $(CC_FLAGS) $<
 
 clean:
 	rm -rf *.o $(PROJ_NAME) *~
