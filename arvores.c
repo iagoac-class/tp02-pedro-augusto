@@ -82,11 +82,12 @@ struct arvbin *Inserir_bin(int valor){
 // Função para remover um nó da árvore binária.
 struct arvbin *Remover_bin(int valor){
     
+    if(root == NULL) return NULL; // Caso a árvores esteja vazia.
+    
     // Criamos ponteiros para percorrer pela àrvore e encontrar o nó pai correto.
     struct arvbin *pai = NULL;
     struct arvbin *tmp = Busca_arvbin(valor, &pai);
 
-    if(root == NULL) return NULL; // Caso a árvores esteja vazia.
 
     if(tmp == NULL) return NULL; // Caso o nó a ser removido não exista.
 
